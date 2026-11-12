@@ -1,0 +1,12 @@
+{
+  "name": "menu",
+  "width": 390,
+  "height": 844,
+  "steps": [
+    { "expect": { "screen": "menu", "text": "Dark Bricks" } },
+    { "expect": { "text": "Новая игра" } },
+    { "tap": "lang", "expect": { "text": "New Game" } },
+    { "tap": "new_game", "expect": { "screen": "difficulty", "text": "Twilight" } },
+    { "tap": "diff_twilight", "expect": { "node": "hud", "text": "Ashen gate" } }
+  ]
+}

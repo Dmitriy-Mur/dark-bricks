@@ -1,0 +1,11 @@
+{
+  "name": "break",
+  "width": 390,
+  "height": 844,
+  "steps": [
+    { "expect": { "screen": "menu", "text": "Новая игра" } },
+    { "tap": "new_game", "expect": { "screen": "difficulty" } },
+    { "tap": "diff_twilight", "expect": { "node": "hud" } },
+    { "keyDown": "KeyK", "expect": { "log": "brick destroyed" } }
+  ]
+}
