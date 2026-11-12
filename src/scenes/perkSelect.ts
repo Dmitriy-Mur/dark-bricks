@@ -38,11 +38,11 @@ export function openPerkSelect(scene: Scene2D, onDone: () => void): void {
     widget = UIWidget(
       UIScrollable(
         UIColumn(
-          UIText(t("perk.title")).style({ color: "#e6dcc8", fontSize: 22, fontWeight: "700" }),
+          UIText(t("perk.title")).style({ color: "#e6dcc8", fontSize: 22, fontWeight: "700", textAlign: "left" }),
           ...cards,
           statsBlock(),
-        ).style({ width: "100%", padding: 16, alignItems: "stretch" }),
-      ).style({ flexGrow: 1, width: "100%" }),
+        ).style({ width: "100%", alignSelf: "stretch", alignItems: "stretch", padding: 16 }),
+      ).style({ flexGrow: 1, width: "100%", alignItems: "stretch" }),
     )
       .named("perkSelect")
       .style({
@@ -53,6 +53,8 @@ export function openPerkSelect(scene: Scene2D, onDone: () => void): void {
         backgroundColor: "#161210f2",
         borderRadius: 16,
         overlayColor: "#000000c0",
+        flexDirection: "column",
+        alignItems: "stretch",
       })
 
     scene.widgets.append(widget)

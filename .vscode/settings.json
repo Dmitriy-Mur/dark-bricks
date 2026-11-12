@@ -1,4 +1,8 @@
 {
-    "lecodes.preview.shell": "ios",
-    "lecodes.preview.mode": "device"
+    "lecodes.preview.shell": "abstract",
+    "lecodes.preview.mode": "device",
+    "lecodes.preview.language": "ru",
+    "lecodes.preview.screenSize": "medium",
+    "lecodes.preview.scale": 100,
+    "lecodes.preview.orientation": "portrait"
 }

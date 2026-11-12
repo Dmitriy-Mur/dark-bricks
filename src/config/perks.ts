@@ -30,6 +30,7 @@ export const ROLL_PERKS: PerkId[] = [
   "laser",
   "balls",
   "xp",
+  "life",
 ]
 
 export function isPerkMaxed(id: PerkId, stacks: PerkStacks): boolean {

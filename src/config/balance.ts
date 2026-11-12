@@ -7,14 +7,14 @@ export const BALANCE = {
   FIELD_H: 680,
   PADDLE_Y: -270,
   PADDLE_H: 12,
-  BALL_RADIUS: 7,
+  BALL_RADIUS: 10,
   BALL_SPEED_BASE: 320,
   /** Degrees off vertical at the paddle's outer edge. */
   BALL_MAX_ANGLE_DEG: 72,
   /** Balls below this (world Y grows upward) have fallen. */
   LOST_Y: -360,
   /** Equal XP per destroyed brick. ~18–24 bricks ≈ one player level. */
-  XP_PER_BRICK: 1,
+  XP_PER_BRICK: 10,
   XP_TO_LEVEL: 18,
   BOSS_W: 240,
   BOSS_H: 70,

@@ -32,7 +32,7 @@ import {
   resolveBallBrickBounce,
   separateBelowBoss,
 } from "../systems/collision"
-import { clearBursts, shakeOffset, spawnBurst, tickShake, triggerShake, updateBursts } from "../systems/particles"
+import { clearBursts, shakeOffset, spawnBurst, spawnGrit, spawnImpact, tickShake, triggerShake, updateBursts } from "../systems/particles"
 import { clampPaddleX, integrateBall, integrateBoss, integrateProjectile } from "../systems/physics"
 import { launchStuck, layoutStuck, spawnBoss, spawnFreshBalls, spawnPaddle, bricksForLevel } from "../systems/spawn"
 import { grantBrickXp } from "../systems/xp"
@@ -199,7 +199,7 @@ function damageBrick(
     grantBrickXp()
     playSfx("break")
     console.log(`brick destroyed xp=${game.xp} player=${game.playerLevel}`)
-    spawnBurst(scene, cx, cy, colorForHp(b.maxHp), 10, 80)
+    spawnGrit(scene, cx, cy, colorForHp(b.maxHp))
     if (direct && Math.random() < explosionChance()) {
       playSfx("boom")
       triggerShake()
@@ -243,6 +243,8 @@ function loseLife(): void {
   onLifeLost()
   for (const p of projectiles) freeProjectile(p)
   projectiles = []
+  for (const l of lasers) freeLaser(l)
+  lasers = []
   if (game.phase === "defeat") {
     teardownScene()
     openDefeat()
@@ -255,19 +257,23 @@ function loseLife(): void {
   syncWorld()
 }
 
+function ballsInPlay(): boolean {
+  return balls.length > 0 && balls.every((b) => !b.stuck)
+}
+
 function fireLaser(): void {
-  if (!scene || !paddle) return
-  const origin = BALANCE.PADDLE_Y + BALANCE.PADDLE_H / 2
+  if (!scene || !paddle || !ballsInPlay()) return
+  // Beam starts at the core center and ends on the near face of the closest
+  // brick or boss above it. World Y grows up. No target: no beam, no shot.
+  const origin = BALANCE.PADDLE_Y
   const hit = laserTarget(bricks, boss, paddle.x, origin)
-  let y1 = BALANCE.FIELD_H / 2 - 8
-  if (hit?.kind === "brick") {
-    damageBrick(hit.brick, BALANCE.LASER_DMG, { laser: true })
-    y1 = brickBounds(hit.brick).bottom
-  } else if (hit?.kind === "boss") {
-    onBossDamaged(BALANCE.LASER_DMG, false)
-    y1 = bossBounds(hit.boss).bottom
-  }
-  const bolt = makeLaser(paddle.x, origin, y1)
+  if (!hit) return
+  const contact = hit.kind === "brick" ? brickBounds(hit.brick).bottom : bossBounds(hit.boss).bottom
+  if (contact <= origin) return
+  if (hit.kind === "brick") damageBrick(hit.brick, BALANCE.LASER_DMG, { laser: true })
+  else onBossDamaged(BALANCE.LASER_DMG, false)
+  spawnImpact(scene, paddle.x, contact)
+  const bolt = makeLaser(paddle.x, origin, contact)
   lasers.push(bolt)
   syncLaserVisual(bolt, scene)
   playSfx("laser")
@@ -461,7 +467,7 @@ function tick(dt: number): void {
   layoutStuck(balls, paddle.x)
 
   const rate = laserShotsPerSecond()
-  if (rate > 0) {
+  if (ballsInPlay() && rate > 0) {
     laserCooldown -= step
     const interval = 1 / (rate * diffMult(game.difficulty))
     if (laserCooldown <= 0) {
@@ -497,11 +503,6 @@ function tick(dt: number): void {
   syncPaddleVisual(paddle, scene)
   for (const b of bricks) if (b.alive) syncBrickVisual(b, scene)
   if (hud) refreshHud(hud)
-
-  if (game.perkQueue > 0) {
-    openPerks()
-    return
-  }
   if (levelIsClear() && bannerT <= 0) beginLevelEnd()
 }
 

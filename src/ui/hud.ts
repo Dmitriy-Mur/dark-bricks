@@ -1,7 +1,7 @@
 import { BALANCE } from "../config/balance"
 import { levelAt } from "../config/levels"
 import { game } from "../core/state"
-import { diffName, t } from "../core/i18n"
+import { t } from "../core/i18n"
 
 type Slot = { el: UIText; x: number; y: number; life: number }
 
@@ -58,15 +58,23 @@ export function createHud(onPause: () => void): UIWidget {
   const playerLabel = UIText("").style({ color: "#8d847c", fontSize: 12 })
   const nameLabel = UIText("").style({ color: "#c4b8a8", fontSize: 14, fontWeight: "700" })
   const livesLabel = UIText("").style({ color: "#c45a5a", fontSize: 16 })
-  const diffLabel = UIText("").style({ color: "#8a9aaf", fontSize: 12 })
   const xpLabel = UIText("").style({ color: "#8a8078", fontSize: 11, marginRight: 8 })
-  const xpBarFill = UIBox().style({ width: 4, height: 8, backgroundColor: "#6a8a5a", borderRadius: 4 })
+  const xpBarFill = UIBox().style({
+    width: "0%",
+    height: "100%",
+    backgroundColor: "#6a8a5a",
+    borderRadius: 4,
+    alignSelf: "flex-start",
+  })
   const xpBarBg = UIBox(xpBarFill).style({
-    width: 120,
-    height: 8,
+    flexGrow: 1,
+    height: 10,
     backgroundColor: "#2a2220",
     borderRadius: 4,
     overflow: "hidden",
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "stretch",
   })
 
   const pauseBtn = UIButton(UIText("II").style({ color: "#d9d0c6", fontSize: 14, fontWeight: "700" }))
@@ -91,20 +99,19 @@ export function createHud(onPause: () => void): UIWidget {
     nameLabel.text = t(def.nameKey)
     const hearts = game.lives <= 6 ? "♥".repeat(Math.max(0, game.lives)) : `♥×${game.lives}`
     livesLabel.text = hearts.length > 0 ? hearts : "·"
-    diffLabel.text = diffName(game.difficulty)
     xpLabel.text = t("hud.xp")
     const ratio = Math.max(0, Math.min(1, game.xp / BALANCE.XP_TO_LEVEL))
-    xpBarFill.style.width = ratio <= 0 ? 0 : Math.max(4, Math.round(120 * ratio))
+    xpBarFill.style.width = `${Math.round(ratio * 1000) / 10}%`
   }
 
   const body = UIColumn(
     nameLabel,
     UIRow(levelLabel, playerLabel).style({ gap: 10, marginTop: 2 }),
-    UIRow(livesLabel, diffLabel).style({ gap: 10, marginTop: 2, alignItems: "center" }),
-    UIRow(xpLabel, xpBarBg).style({ marginTop: 6, alignItems: "center" }),
+    UIRow(livesLabel).style({ marginTop: 2, alignItems: "center" }),
+    UIRow(xpLabel, xpBarBg).style({ marginTop: 6, alignItems: "center", width: "100%" }),
   )
     .named("hud")
-    .style({ alignItems: "flex-start", paddingTop: 10, paddingLeft: 14, paddingRight: 52 })
+    .style({ alignItems: "stretch", width: "100%", paddingTop: 10, paddingLeft: 14, paddingRight: 52 })
 
   const hud = UIWidget(body, pauseBtn)
     .named("gameplay")

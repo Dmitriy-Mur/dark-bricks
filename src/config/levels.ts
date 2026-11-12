@@ -40,11 +40,11 @@ function level(
 /** All 30 campaign layouts. Boss levels (3, 6, …, 30) still include bricks. */
 export const LEVELS: LevelDef[] = [
   level("ashen-gate", "level.1", 0, [
-    "...3.3...",
-    "...3.3...",
-    "..33333..",
-    "...111...",
-    "111...111",
+    "...1.1...",
+    "...2.2...",
+    "..12321..",
+    "...1.1...",
+    ".1.....1.",
   ]),
   level("moss-crypt", "level.2", 0, [
     "..22222..",
