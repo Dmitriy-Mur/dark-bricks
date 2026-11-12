@@ -57,7 +57,8 @@ let balls: BallEntity[] = []
 let bricks: BrickEntity[] = []
 let boss: BossEntity | null = null
 let projectiles: ProjectileEntity[] = []
-let lasers: LaserBolt[] = []
+let aim: LaserBolt | null = null
+let aimT = 0
 let hud: UIWidget | null = null
 let banner: UIWidget | null = null
 let bannerLabel: UIText | null = null
@@ -67,6 +68,13 @@ let pauseOpen = false
 let transitioning = false
 let laserCooldown = 0.4
 let keysBound = false
+let frame: {
+  bg: Path2D
+  left: Path2D
+  right: Path2D
+  top: Path2D
+  bottom: Path2D
+} | null = null
 
 function bindKeys(): void {
   if (keysBound) return
@@ -98,16 +106,40 @@ function fitCamera(): { y: number; zoom: number } {
   return { y: 36, zoom: Math.max(0.25, zoom) }
 }
 
+/** Board fill and the frame cover the whole viewport, including above and below the playfield. */
+function layoutFrame(): void {
+  if (!scene || !frame) return
+  const w = device.width > 0 ? device.width : 390
+  const h = device.height > 0 ? device.height : 844
+  const zoom = Math.max(0.25, scene.camera.zoom)
+  const cam = scene.camera.position
+  const viewW = w / zoom
+  const viewH = h / zoom
+  const bleed = 40
+  const thick = 12
+  frame.bg.position = new Vec2(cam.x, cam.y)
+  frame.bg.scale = new Vec2(viewW + bleed * 2, viewH + bleed * 2)
+  const sideH = viewH + bleed * 2
+  frame.left.position = new Vec2(-BALANCE.FIELD_W / 2 - thick / 2, cam.y)
+  frame.right.position = new Vec2(BALANCE.FIELD_W / 2 + thick / 2, cam.y)
+  frame.left.scale = new Vec2(thick, sideH)
+  frame.right.scale = new Vec2(thick, sideH)
+  const railW = viewW + bleed * 2
+  frame.top.position = new Vec2(cam.x, cam.y + viewH / 2 - thick / 2)
+  frame.bottom.position = new Vec2(cam.x, cam.y - viewH / 2 + thick / 2)
+  frame.top.scale = new Vec2(railW, thick)
+  frame.bottom.scale = new Vec2(railW, thick)
+}
+
 function clearActors(): void {
   for (const b of balls) freeBall(b)
   for (const b of bricks) freeBrick(b)
   for (const p of projectiles) freeProjectile(p)
-  for (const l of lasers) freeLaser(l)
+  clearAim()
   if (boss) freeBoss(boss)
   balls = []
   bricks = []
   projectiles = []
-  lasers = []
   boss = null
 }
 
@@ -124,6 +156,7 @@ function teardownScene(): void {
   bannerLabel = null
   perkOpen = false
   pauseOpen = false
+  frame = null
   if (scene) {
     scene.close()
     scene.destroy()
@@ -243,8 +276,7 @@ function loseLife(): void {
   onLifeLost()
   for (const p of projectiles) freeProjectile(p)
   projectiles = []
-  for (const l of lasers) freeLaser(l)
-  lasers = []
+  clearAim()
   if (game.phase === "defeat") {
     teardownScene()
     openDefeat()
@@ -261,29 +293,57 @@ function ballsInPlay(): boolean {
   return balls.length > 0 && balls.every((b) => !b.stuck)
 }
 
+function clearAim(): void {
+  aimT = 0
+  if (!aim) return
+  freeLaser(aim)
+  aim = null
+}
+
+function tickAim(step: number): void {
+  if (aimT <= 0) return
+  aimT -= step
+  if (aimT <= 0) clearAim()
+}
+
+/** Top of the playfield. World Y grows upward. */
+function fieldTop(): number {
+  return BALANCE.FIELD_H / 2
+}
+
+function paddleMouth(): number {
+  return BALANCE.PADDLE_Y + BALANCE.PADDLE_H / 2
+}
+
+/**
+ * End of the upward beam: the near face of the closest brick or boss in the
+ * paddle column, or the top edge of the level when that column is empty.
+ */
+function beamStop(): { y: number; hit: ReturnType<typeof laserTarget> } {
+  const origin = paddleMouth()
+  const ceiling = fieldTop()
+  if (!paddle) return { y: ceiling, hit: null }
+  const hit = laserTarget(bricks, boss, paddle.x, origin)
+  if (!hit) return { y: ceiling, hit: null }
+  const face = hit.kind === "brick" ? brickBounds(hit.brick).bottom : bossBounds(hit.boss).bottom
+  return { y: Math.min(ceiling, face), hit }
+}
+
+/** One shot: a short flash from the paddle to the stop point, then the line is gone. */
 function fireLaser(): void {
   if (!scene || !paddle || !ballsInPlay()) return
-  // Beam starts at the core center and ends on the near face of the closest
-  // brick or boss above it. World Y grows up. No target: no beam, no shot.
-  const origin = BALANCE.PADDLE_Y
-  const hit = laserTarget(bricks, boss, paddle.x, origin)
+  const origin = paddleMouth()
+  const { y, hit } = beamStop()
+  if (y <= origin + 1) return
+  clearAim()
+  aim = makeLaser(paddle.x, origin, y)
+  syncLaserVisual(aim, scene)
+  aimT = 0.07
+  playSfx("laser")
   if (!hit) return
-  const contact = hit.kind === "brick" ? brickBounds(hit.brick).bottom : bossBounds(hit.boss).bottom
-  if (contact <= origin) return
   if (hit.kind === "brick") damageBrick(hit.brick, BALANCE.LASER_DMG, { laser: true })
   else onBossDamaged(BALANCE.LASER_DMG, false)
-  spawnImpact(scene, paddle.x, contact)
-  const bolt = makeLaser(paddle.x, origin, contact)
-  lasers.push(bolt)
-  syncLaserVisual(bolt, scene)
-  playSfx("laser")
-  const gen = generation
-  setTimeout(() => {
-    if (gen !== generation) return
-    freeLaser(bolt)
-    const i = lasers.indexOf(bolt)
-    if (i >= 0) lasers.splice(i, 1)
-  }, 90)
+  spawnImpact(scene, paddle.x, y)
 }
 
 function collideBall(ball: BallEntity): void {
@@ -442,6 +502,7 @@ function tick(dt: number): void {
   const j = shakeOffset(fit.zoom)
   scene.camera.zoom = fit.zoom
   scene.camera.position = new Vec2(j.x, fit.y + j.y)
+  layoutFrame()
   updateBursts(step)
   updateFloaters(scene.camera, step)
 
@@ -456,6 +517,7 @@ function tick(dt: number): void {
   }
 
   if (levelIsClear()) {
+    clearAim()
     if (bannerT > 0) {
       if (hud) refreshHud(hud)
       return
@@ -465,6 +527,7 @@ function tick(dt: number): void {
   }
 
   layoutStuck(balls, paddle.x)
+  tickAim(step)
 
   const rate = laserShotsPerSecond()
   if (ballsInPlay() && rate > 0) {
@@ -509,16 +572,21 @@ function tick(dt: number): void {
 function setupScene(): void {
   teardownScene()
   bindKeys()
-  const sc = new Scene2D({ background: "#0c0a09", filter: "linear" })
+  const sc = new Scene2D({ background: "#14110f", filter: "linear" })
   scene = sc
-  const bg = Path2D.rect([BALANCE.FIELD_W, BALANCE.FIELD_H], { fill: "#14110f", z: 0 })
-  const wallL = Path2D.rect([10, BALANCE.FIELD_H + 8], { fill: "#241c18", z: 1 })
-  const wallR = Path2D.rect([10, BALANCE.FIELD_H + 8], { fill: "#241c18", z: 1 })
+  const bg = Path2D.rect([1, 1], { fill: "#14110f", z: 0 })
+  const wallL = Path2D.rect([1, 1], { fill: "#241c18", z: 1 })
+  const wallR = Path2D.rect([1, 1], { fill: "#241c18", z: 1 })
+  const wallT = Path2D.rect([1, 1], { fill: "#241c18", z: 1 })
+  const wallB = Path2D.rect([1, 1], { fill: "#241c18", z: 1 })
   const pit = Path2D.rect([BALANCE.FIELD_W, 6], { fill: "#4a1515", z: 1 })
-  wallL.position = new Vec2(-BALANCE.FIELD_W / 2 - 5, 0)
-  wallR.position = new Vec2(BALANCE.FIELD_W / 2 + 5, 0)
   pit.position = new Vec2(0, -BALANCE.FIELD_H / 2 + 2)
-  sc.add(bg, wallL, wallR, pit)
+  frame = { bg, left: wallL, right: wallR, top: wallT, bottom: wallB }
+  sc.add(bg, wallL, wallR, wallT, wallB, pit)
+  const fit = fitCamera()
+  sc.camera.zoom = fit.zoom
+  sc.camera.position = new Vec2(0, fit.y)
+  layoutFrame()
 
   paddle = spawnPaddle()
   hud = createHud(() => openPause())
