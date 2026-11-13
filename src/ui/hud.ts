@@ -40,6 +40,7 @@ export function createFloaters(): UIWidget {
       position: "absolute",
       color: "#f7f4ee",
       fontSize: 18,
+      fontFamily: "Georgia",
       fontWeight: "700",
       opacity: 0,
       left: 0,
@@ -54,11 +55,11 @@ export function createFloaters(): UIWidget {
 }
 
 export function createHud(onPause: () => void): UIWidget {
-  const levelLabel = UIText("").style({ color: "#d8cfc4", fontSize: 13 })
-  const playerLabel = UIText("").style({ color: "#8d847c", fontSize: 12 })
-  const nameLabel = UIText("").style({ color: "#c4b8a8", fontSize: 14, fontWeight: "700" })
-  const livesLabel = UIText("").style({ color: "#c45a5a", fontSize: 16 })
-  const xpLabel = UIText("").style({ color: "#8a8078", fontSize: 11, marginRight: 8 })
+  const levelLabel = UIText("").style({ color: "#d8cfc4", fontSize: 13, fontFamily: "Georgia" })
+  const playerLabel = UIText("").style({ color: "#8d847c", fontSize: 12, fontFamily: "Georgia" })
+  const nameLabel = UIText("").style({ color: "#c4b8a8", fontSize: 14, fontWeight: "700", fontFamily: "Georgia" })
+  const livesLabel = UIText("").style({ color: "#c45a5a", fontSize: 16, fontFamily: "Georgia" })
+  const xpLabel = UIText("").style({ color: "#8a8078", fontSize: 11, marginRight: 8, fontFamily: "Georgia" })
   const xpBarFill = UIBox().style({
     width: "0%",
     height: "100%",
@@ -77,7 +78,7 @@ export function createHud(onPause: () => void): UIWidget {
     alignItems: "stretch",
   })
 
-  const pauseBtn = UIButton(UIText("II").style({ color: "#d9d0c6", fontSize: 14, fontWeight: "700" }))
+  const pauseBtn = UIButton(UIText("II").style({ color: "#d9d0c6", fontSize: 14, fontWeight: "700", fontFamily: "Georgia" }))
     .named("pause")
     .style({
       position: "absolute",

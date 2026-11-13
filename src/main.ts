@@ -4,6 +4,7 @@ import { loadMeta } from "./core/save"
 import { openMenu } from "./scenes/menu"
 
 export function boot(): void {
+  theme({ fontFamily: "Georgia" })
   loadLangFromStorage()
   loadMeta()
   initAudio()

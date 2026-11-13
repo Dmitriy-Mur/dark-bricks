@@ -581,8 +581,10 @@ function setupScene(): void {
   const wallB = Path2D.rect([1, 1], { fill: "#241c18", z: 1 })
   const pit = Path2D.rect([BALANCE.FIELD_W, 6], { fill: "#4a1515", z: 1 })
   pit.position = new Vec2(0, -BALANCE.FIELD_H / 2 + 2)
+  const ceiling = Path2D.rect([BALANCE.FIELD_W + 24, 8], { fill: "#7a6c62", z: 2 })
+  ceiling.position = new Vec2(0, BALANCE.FIELD_H / 2)
   frame = { bg, left: wallL, right: wallR, top: wallT, bottom: wallB }
-  sc.add(bg, wallL, wallR, wallT, wallB, pit)
+  sc.add(bg, wallL, wallR, wallT, wallB, pit, ceiling)
   const fit = fitCamera()
   sc.camera.zoom = fit.zoom
   sc.camera.position = new Vec2(0, fit.y)
@@ -595,6 +597,7 @@ function setupScene(): void {
     color: "#e8d4c4",
     fontSize: 22,
     fontWeight: "700",
+    fontFamily: "Georgia",
     textAlign: "center",
   })
   banner = UIWidget(UIColumn(bannerLabel).style({ alignItems: "center", padding: 8 }))

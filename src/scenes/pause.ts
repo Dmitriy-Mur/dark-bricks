@@ -1,5 +1,6 @@
 import { getMusicVolume, getSfxVolume, playSfx, setMusicVolume, setSfxVolume } from "../core/audio"
 import { getLang, setLang, t } from "../core/i18n"
+import { volumeSlider } from "../ui/slider"
 
 function btn(): Style<UIButton> {
   return {
@@ -45,42 +46,8 @@ export function openPauseOverlay(scene: Scene2D, onResume: () => void, onSaveExi
             onSaveExit()
           }),
         UIText(t("pause.settings")).style({ color: "#9a9088", fontSize: 13, marginTop: 14 }),
-        UIRow(
-          UIText(t("menu.music")).style({ color: "#c8bfb0", fontSize: 13, width: 72 }),
-          UIButton(UIText("−").style({ color: "#ccc" }))
-            .named("pause_music_minus")
-            .style({ padding: 8, backgroundColor: "#2a2420", borderRadius: 8 })
-            .onClick(() => {
-              setMusicVolume(Math.max(0, Math.round((music - 0.1) * 10) / 10))
-              build()
-            }),
-          UIText(`${Math.round(music * 100)}%`).style({ color: "#aaa", fontSize: 12, width: 40, textAlign: "center" }),
-          UIButton(UIText("+").style({ color: "#ccc" }))
-            .named("pause_music_plus")
-            .style({ padding: 8, backgroundColor: "#2a2420", borderRadius: 8 })
-            .onClick(() => {
-              setMusicVolume(Math.min(1, Math.round((music + 0.1) * 10) / 10))
-              build()
-            }),
-        ).style({ marginTop: 8, alignItems: "center", gap: 6 }),
-        UIRow(
-          UIText(t("menu.sfx")).style({ color: "#c8bfb0", fontSize: 13, width: 72 }),
-          UIButton(UIText("−").style({ color: "#ccc" }))
-            .named("pause_sfx_minus")
-            .style({ padding: 8, backgroundColor: "#2a2420", borderRadius: 8 })
-            .onClick(() => {
-              setSfxVolume(Math.max(0, Math.round((sfx - 0.1) * 10) / 10))
-              build()
-            }),
-          UIText(`${Math.round(sfx * 100)}%`).style({ color: "#aaa", fontSize: 12, width: 40, textAlign: "center" }),
-          UIButton(UIText("+").style({ color: "#ccc" }))
-            .named("pause_sfx_plus")
-            .style({ padding: 8, backgroundColor: "#2a2420", borderRadius: 8 })
-            .onClick(() => {
-              setSfxVolume(Math.min(1, Math.round((sfx + 0.1) * 10) / 10))
-              build()
-            }),
-        ).style({ marginTop: 8, alignItems: "center", gap: 6 }),
+        volumeSlider(t("menu.music"), music, "pause_music", setMusicVolume),
+        volumeSlider(t("menu.sfx"), sfx, "pause_sfx", setSfxVolume),
         UIButton(UIText(`${t("pause.lang")}: ${getLang() === "en" ? "EN" : "RU"}`).style({ color: "#ddd", fontSize: 15 }))
           .named("pause_lang")
           .style(btn())

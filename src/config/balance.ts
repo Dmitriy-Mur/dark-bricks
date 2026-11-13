@@ -14,7 +14,7 @@ export const BALANCE = {
   /** Balls below this (world Y grows upward) have fallen. */
   LOST_Y: -360,
   /** Equal XP per destroyed brick. ~18–24 bricks ≈ one player level. */
-  XP_PER_BRICK: 10,
+  XP_PER_BRICK: 1,
   XP_TO_LEVEL: 18,
   BOSS_W: 240,
   BOSS_H: 70,

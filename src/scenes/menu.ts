@@ -2,6 +2,7 @@ import { t, getLang, setLang } from "../core/i18n"
 import { hasSave, isEndlessUnlocked } from "../core/save"
 import { getMusicVolume, getSfxVolume, playMusic, playSfx, setMusicVolume, setSfxVolume } from "../core/audio"
 import { setPhase } from "../core/state"
+import { volumeSlider } from "../ui/slider"
 import { openDifficultySelect } from "./difficulty"
 import { continueGame } from "./gameplay"
 
@@ -15,27 +16,6 @@ function btn(): Style<UIButton> {
     width: "100%",
     alignItems: "center",
   }
-}
-
-function volumeRow(label: string, value: number, minusName: string, plusName: string, onChange: (v: number) => void): UIRow {
-  return UIRow(
-    UIText(label).style({ color: "#9a9088", fontSize: 13, width: 72 }),
-    UIButton(UIText("−").style({ color: "#ccc" }))
-      .named(minusName)
-      .style({ padding: 8, backgroundColor: "#2a2420", borderRadius: 8 })
-      .onClick(() => {
-        onChange(Math.max(0, Math.round((value - 0.1) * 10) / 10))
-        openMenu()
-      }),
-    UIText(`${Math.round(value * 100)}%`).style({ color: "#888", fontSize: 12, width: 44, textAlign: "center" }),
-    UIButton(UIText("+").style({ color: "#ccc" }))
-      .named(plusName)
-      .style({ padding: 8, backgroundColor: "#2a2420", borderRadius: 8 })
-      .onClick(() => {
-        onChange(Math.min(1, Math.round((value + 0.1) * 10) / 10))
-        openMenu()
-      }),
-  ).style({ marginTop: 10, alignItems: "center", gap: 8 })
 }
 
 export function openMenu(): void {
@@ -74,9 +54,19 @@ export function openMenu(): void {
     )
   }
 
-  const langBtn = UIButton(UIText(getLang() === "en" ? "EN" : "RU").style({ color: "#c8bfb0", fontSize: 14 }))
+  const langBtn = UIButton(
+    UIText(`${t("pause.lang")}: ${getLang() === "en" ? "EN" : "RU"}`).style({ color: "#ddd", fontSize: 15 }),
+  )
     .named("lang")
-    .style({ padding: 8, marginTop: 14, backgroundColor: "#241c18", borderRadius: 8 })
+    .style({
+      backgroundColor: "#2a2420",
+      borderRadius: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      marginTop: 8,
+      width: "100%",
+      alignItems: "center",
+    })
     .onClick(() => {
       setLang(getLang() === "en" ? "ru" : "en")
       playSfx("ui")
@@ -85,16 +75,16 @@ export function openMenu(): void {
 
   UIScreen(
     UIColumn(
-      UIText(t("app.title")).style({ color: "#e4d8c8", fontSize: 36, fontWeight: "700" }),
+      UIText(t("app.title")).style({ color: "#e4d8c8", fontSize: 36, fontWeight: "700", textAlign: "center" }),
       ...buttons,
       langBtn,
-      volumeRow(t("menu.music"), getMusicVolume(), "music_minus", "music_plus", setMusicVolume),
-      volumeRow(t("menu.sfx"), getSfxVolume(), "sfx_minus", "sfx_plus", setSfxVolume),
+      volumeSlider(t("menu.music"), getMusicVolume(), "music", setMusicVolume),
+      volumeSlider(t("menu.sfx"), getSfxVolume(), "sfx", setSfxVolume),
     ).style({
       backgroundColor: "#1a1614",
       borderRadius: 20,
       padding: 28,
-      alignItems: "center",
+      alignItems: "stretch",
       width: "100%",
       maxWidth: 360,
     }),
